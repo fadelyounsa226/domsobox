@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Domsobox — Téléchargement de films</title>
+  <style>
+    :root{
+      --bg:#0b0f1a;--card:#121830;--accent:#4f7cff;--ok:#22c55e;--warn:#f59e0b;--text:#e5e7eb;--muted:#9ca3af;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#0b0f1a 0%,#0e1423 100%);color:var(--text);font-family:Inter,Segoe UI,system-ui,-apple-system,Arial,sans-serif}
+    header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #1f2a44;background:#0c1222;position:sticky;top:0;z-index:10}
+    header h1{font-size:20px;margin:0}
+    header .badge{font-size:12px;color:var(--muted)}
+    .container{max-width:980px;margin:24px auto;padding:0 16px}
+    .grid{display:grid;gap:16px}
+    .card{background:var(--card);border:1px solid #1c2540;border-radius:12px;padding:16px}
+    .card h2{margin:0 0 8px;font-size:18px}
+    .card p{margin:6px 0;color:var(--muted)}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #223058;background:#0d1324;color:var(--text)}
+    label{font-size:13px;color:var(--muted);margin-bottom:6px;display:block}
+    button{background:var(--accent);color:white;border:none;border-radius:8px;padding:10px 14px;cursor:pointer}
+    button.secondary{background:#263564}
+    button.success{background:var(--ok)}
+    button.warn{background:var(--warn);color:black}
+    .tabs{display:flex;gap:8px;margin-bottom:12px}
+    .tab{padding:8px 12px;border-radius:999px;border:1px solid #223058;background:#121830;color:var(--text);cursor:pointer}
+    .tab.active{background:var(--accent)}
+    .hidden{display:none}
+    .film{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:10px;border:1px solid #223058;background:#0d1324}
+    .film img{width:90px;height:130px;border-radius:8px;object-fit:cover}
+    .film h3{margin:0 0 6px;font-size:16px}
+    .status{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid #223058;color:var(--muted);display:inline-block}
+    .status.ok{color:#a7f3d0;border-color:#065f46}
+    .status.lock{color:#fecaca;border-color:#7f1d1d}
+    .footer{color:var(--muted);font-size:12px;text-align:center;margin:24px 0}
+    .note{font-size:12px;color:#fca5a5}
+    .flex-between{display:flex;justify-content:space-between;align-items:center}
+    .chip{font-size:12px;background:#0d1324;border:1px solid #223058;color:var(--muted);padding:4px 8px;border-radius:999px}
+    .center{text-align:center}
+    .spacer{height:8px}
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Domsobox</h1>
+      <div class="badge">Téléchargement de films — Abonnement 3000 FCFA/mois (simulation)</div>
+    </div>
+    <div>
+      <span id="userStatus" class="chip">Non connecté</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Accueil / Auth -->
+    <section id="authSection" class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="card">
+        <h2>Inscription</h2>
+        <p>Créez votre compte pour accéder aux téléchargements.</p>
+        <div class="row">
+          <div style="flex:1 1 100%">
+            <label>Nom complet</label>
+            <input id="regName" type="text" placeholder="Ex: Fadel Az..." />
+          </div>
+          <div style="flex:1 1 100%">
+            <label>Email</label>
+            <input id="regEmail" type="email" placeholder="exemple@domaine.com" />
+          </div>
+          <div style="flex:1 1 100%">
+            <label>Mot de passe</label>
+            <input id="regPass" type="password" placeholder="••••••••" />
+          </div>
+        </div>
+        <div class="spacer"></div>
+        <button id="btnRegister">S'inscrire</button>
+        <p class="note">Cette inscription est locale (simulation), aucune donnée n'est envoyée.</p>
+      </div>
+
+      <div class="card">
+        <h2>Connexion</h2>
+        <p>Accédez à votre espace abonné.</p>
+        <div class="row">
+          <div style="flex:1 1 100%">
+            <label>Email</label>
+            <input id="loginEmail" type="email" placeholder="exemple@domaine.com" />
+          </div>
+          <div style="flex:1 1 100%">
+            <label>Mot de passe</label>
+            <input id="loginPass" type="password" placeholder="••••••••" />
+          </div>
+        </div>
+        <div class="spacer"></div>
+        <button id="btnLogin">Se connecter</button>
+        <button id="btnLogout" class="secondary" style="margin-left:8px">Se déconnecter</button>
+      </div>
+    </section>
+
+    <!-- Abonnement -->
+    <section id="subscribeSection" class="card hidden">
+      <div class="flex-between">
+        <label for="plan">Formule</label>
+          <select id="plan">
+            <option value="monthly" selected>Mensuel — 3000 FCFA</option>
+            <option value="weekly">Hebdomadaire — 1200 FCFA</option>
+            <option value="daily">Journalier — 500 FCFA</option>
+          </select>
+        <span id="subStatus" class="status lock">Inactif</span>
+      </div>
+      <p>Choisissez un mode de paiement (simulation). Aucune transaction réelle n'est effectuée.</p>
+      <div class="tabs">
+        <button class="tab active" data-tab="card">Carte bancaire</button>
+        <button class="tab" data-tab="mtn">Mobile Money MTN</button>
+        <button class="tab" data-tab="celtiis">Mobile Money Celtiis</button>
+      </div>
+
+      <!-- Carte bancaire -->
+      <div id="tab-card">
+        <div class="row">
+          <div style="flex:1 1 100%">
+            <label>Numéro de carte</label>
+            <input id="ccNumber" type="text" placeholder="4242 4242 4242 4242" />
+          </div>
+          <div style="flex:1 1 48%">
+            <label>Expiration (MM/AA)</label>
+            <input id="ccExp" type="text" placeholder="12/28" />
+          </div>
+          <div style="flex:1 1 48%">
+            <label>CVV</label>
+            <input id="ccCvv" type="text" placeholder="123" />
+          </div>
+        </div>
+        <div class="spacer"></div>
+        <button id="btnPayCard" class="success">Payer 3000 FCFA</button>
+      </div>
+
+      <!-- MTN -->
+      <div id="tab-mtn" class="hidden">
+        <div class="row">
+          <div style="flex:1 1 100%">
+            <label>Numéro MTN Mobile Money</label>
+            <input id="mtnNumber" type="text" placeholder="Ex: 67 00 00 00" />
+          </div>
+        </div>
+        <div class="spacer"></div>
+        <button id="btnPayMTN" class="success">Payer 3000 FCFA via MTN</button>
+      </div>
+
+      <!-- Celtiis -->
+      <div id="tab-celtiis" class="hidden">
+        <div class="row">
+          <div style="flex:1 1 100%">
+            <label>Numéro Celtiis Mobile Money</label>
+            <input id="celNumber" type="text" placeholder="Ex: 52 00 00 00" />
+          </div>
+        </div>
+        <div class="spacer"></div>
+        <button id="btnPayCeltiis" class="success">Payer 3000 FCFA via Celtiis</button>
+      </div>
+
+      <p class="note">Pour un déploiement réel, utilise une passerelle de paiement conforme (carte) et les APIs officielles (MTN, Celtiis).</p>
+    </section>
+
+    <!-- Catalogue -->
+    <section id="catalogSection" class="card hidden">
+      <div class="flex-between">
+        <h2>Catalogue de films</h2>
+        <span id="accessStatus" class="status lock">Accès limité — abonnement requis</span>
+      </div>
+      <p>Liste de films fictifs (placeholders). Le téléchargement est simulé localement.</p>
+
+      <div id="filmsList" class="grid" style="grid-template-columns:1fr;">
+        <!-- Films injectés par JS -->
+      </div>
+    </section>
+
+    <!-- Journal -->
+    <section class="card">
+      <h2>Journal des événements</h2>
+      <div id="log" style="font-size:13px;color:var(--muted);white-space:pre-wrap;min-height:60px;background:#0d1324;border:1px solid #223058;border-radius:8px;padding:10px;"></div>
+    </section>
+
+    <div class="footer">
+      Utilisation uniquement avec contenus libres de droits ou sous licence. Simulations locales, aucune donnée envoyée.
+    </div>
+  </main>
+
+  <script>
+    // --- Stockage local (simulation) ---
+    const state = {
+      user: null, // {name,email}
+      subscribed: false, // bool
+      films: [
+        {
+          id: 'f1',
+          title: 'Le Vent du Sud',
+          year: 2024,
+          duration: '1h52',
+          genre: 'Drame',
+          cover: 'https://picsum.photos/seed/film1/200/300',
+          fileUrl: 'data:text/plain;charset=utf-8,Contenu%20fictif%20du%20film%20Le%20Vent%20du%20Sud'
+        },
+        {
+          id: 'f2',
+          title: 'Nuit Électrique',
+          year: 2023,
+          duration: '2h04',
+          genre: 'Thriller',
+          cover: 'https://picsum.photos/seed/film2/200/300',
+          fileUrl: 'data:text/plain;charset=utf-8,Contenu%20fictif%20du%20film%20Nuit%20Électrique'
+        },
+        {
+          id: 'f3',
+          title: 'Horizons',
+          year: 2025,
+          duration: '1h38',
+          genre: 'Aventure',
+          cover: 'https://picsum.photos/seed/film3/200/300',
+          fileUrl: 'data:text/plain;charset=utf-8,Contenu%20fictif%20du%20film%20Horizons'
+        }
+      ],
+      logs: []
+    };
+
+    const $ = (sel)=>document.querySelector(sel);
+    const $$ = (sel)=>document.querySelectorAll(sel);
+
+    function log(msg){
+      const stamp = new Date().toLocaleString();
+      state.logs.push(`[${stamp}] ${msg}`);
+      $('#log').textContent = state.logs.slice(-6).join('\n');
+    }
+
+    // --- UI refresh ---
+    function refreshUI(){
+      // Header status
+      $('#userStatus').textContent = state.user ? `Connecté: ${state.user.email}` : 'Non connecté';
+
+      // Sections
+      const isLogged = !!state.user;
+      $('#authSection').classList.toggle('hidden', isLogged);
+      $('#subscribeSection').classList.toggle('hidden', !isLogged);
+      $('#catalogSection').classList.toggle('hidden', !isLogged);
+
+      // Subscription status
+      const subBadge = $('#subStatus');
+      subBadge.textContent = state.subscribed ? 'Actif' : 'Inactif';
+      subBadge.className = 'status ' + (state.subscribed ? 'ok' : 'lock');
+
+      const access = $('#accessStatus');
+      access.textContent = state.subscribed ? 'Accès complet — téléchargement autorisé' : 'Accès limité — abonnement requis';
+      access.className = 'status ' + (state.subscribed ? 'ok' : 'lock');
+
+      renderFilms();
+    }
+
+    function renderFilms(){
+      const list = $('#filmsList');
+      list.innerHTML = '';
+      state.films.forEach(f=>{
+        const card = document.createElement('div');
+        card.className = 'film';
+        card.innerHTML = `
+          <img src="${f.cover}" alt="${f.title}"/>
+          <div style="flex:1">
+            <div class="flex-between">
+              <h3>${f.title}</h3>
+              <span class="chip">${f.year} • ${f.duration} • ${f.genre}</span>
+            </div>
+            <p style="margin:6px 0;color:#cbd5e1">Synopsis: Film fictif pour tests. Remplace par tes contenus autorisés.</p>
+            <div class="row">
+              ${state.subscribed ? `
+                <button data-id="${f.id}" class="dlBtn">Télécharger</button>
+                <button data-id="${f.id}" class="secondary previewBtn">Aperçu</button>
+              ` : `
+                <button class="warn">Abonne-toi pour télécharger</button>
+              `}
+            </div>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+
+      // Bind buttons
+      $$('.dlBtn').forEach(b=>{
+        b.addEventListener('click', (e)=>{
+          const id = e.currentTarget.getAttribute('data-id');
+          downloadFilm(id);
+        });
+      });
+      $$('.previewBtn').forEach(b=>{
+        b.addEventListener('click', (e)=>{
+          const id = e.currentTarget.getAttribute('data-id');
+          previewFilm(id);
+        });
+      });
+    }
+
+    // --- Auth ---
+    $('#btnRegister').addEventListener('click', ()=>{
+      const name = $('#regName').value.trim();
+      const email = $('#regEmail').value.trim();
+      const pass = $('#regPass').value.trim();
+      if(!name || !email || !pass){ log('Inscription: champs manquants'); alert('Veuillez compléter tous les champs.'); return; }
+      // Simulation: stockage local
+      localStorage.setItem('cp_user', JSON.stringify({name,email}));
+      localStorage.setItem('cp_pass', pass);
+      state.user = {name,email};
+      log(`Inscription réussie pour ${email}`);
+      refreshUI();
+    });
+
+    $('#btnLogin').addEventListener('click', ()=>{
+      const email = $('#loginEmail').value.trim();
+      const pass = $('#loginPass').value.trim();
+      const savedUser = JSON.parse(localStorage.getItem('cp_user')||'null');
+      const savedPass = localStorage.getItem('cp_pass');
+      if(!email || !pass){ log('Connexion: champs manquants'); alert('Veuillez compléter tous les champs.'); return; }
+      if(!savedUser || email !== savedUser.email || pass !== savedPass){
+        log('Connexion échouée');
+        alert('Identifiants incorrects ou compte inexistant.');
+        return;
+      }
+      state.user = savedUser;
+      log(`Connecté: ${email}`);
+      refreshUI();
+    });
+
+    $('#btnLogout').addEventListener('click', ()=>{
+      state.user = null;
+      state.subscribed = false;
+      log('Déconnexion effectuée');
+      refreshUI();
+    });
+
+    // --- Tabs paiement ---
+    $$('.tab').forEach(tab=>{
+      tab.addEventListener('click', ()=>{
+        $$('.tab').forEach(t=>t.classList.remove('active'));
+        tab.classList.add('active');
+        const target = tab.getAttribute('data-tab');
+        ['card','mtn','celtiis'].forEach(id=>{
+          document.getElementById('tab-'+id).classList.toggle('hidden', id!==target);
+        });
+      });
+    });
+
+    // --- Paiement (simulation) ---
+    function simulatePayment(channel, validator){
+      if(!state.user){ alert('Veuillez vous connecter.'); return; }
+      const ok = validator();
+      if(!ok){ log(`Paiement ${channel}: données invalides`); alert('Vérifiez les informations.'); return; }
+      // Simulation de confirmation
+      setTimeout(()=>{
+        state.subscribed = true;
+        log(`Paiement ${channel}: abonnement activé (3000 FCFA)`);
+        alert('Abonnement activé !');
+        refreshUI();
+      }, 600);
+    }
+
+    $('#btnPayCard').addEventListener('click', ()=>{
+      simulatePayment('Carte', ()=>{
+        const num = $('#ccNumber').value.replace(/\s+/g,'');
+        const exp = $('#ccExp').value.trim();
+        const cvv = $('#ccCvv').value.trim();
+        return num.length>=12 && /\d{2}\/\d{2}/.test(exp) && cvv.length>=3;
+      });
+    });
+
+    $('#btnPayMTN').addEventListener('click', ()=>{
+      simulatePayment('MTN MoMo', ()=>{
+        const n = $('#mtnNumber').value.replace(/\s+/g,'');
+        return n.length>=8;
+      });
+    });
+
+    $('#btnPayCeltiis').addEventListener('click', ()=>{
+      simulatePayment('Celtiis MoMo', ()=>{
+        const n = $('#celNumber').value.replace(/\s+/g,'');
+        return n.length>=8;
+      });
+    });
+
+    // --- Téléchargement / Aperçu (simulation) ---
+    function downloadFilm(id){
+      if(!state.subscribed){ alert('Abonne-toi pour télécharger.'); return; }
+      const f = state.films.find(x=>x.id===id);
+      if(!f){ return; }
+      const a = document.createElement('a');
+      a.href = f.fileUrl; // data URL fictif
+      a.download = `${f.title.replace(/\s+/g,'_')}.txt`; // remplacer par .mp4 avec vrai fichier
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      log(`Téléchargement: ${f.title}`);
+    }
+
+    function previewFilm(id){
+      const f = state.films.find(x=>x.id===id);
+      if(!f){ return; }
+      alert(`Aperçu de "${f.title}" — contenu fictif.\nRemplace le data URL par la vraie source vidéo.`);
+      log(`Aperçu: ${f.title}`);
+    }
+
+    // --- Init (restauration éventuelle) ---
+    window.addEventListener('DOMContentLoaded', ()=>{
+      const savedUser = JSON.parse(localStorage.getItem('cp_user')||'null');
+      if(savedUser){ state.user = savedUser; }
+      const savedSub = localStorage.getItem('cp_subscribed') === 'true';
+      state.subscribed = savedSub;
+      refreshUI();
+    });
+
+    // Persistance simple de l'état d’abonnement
+    const observer = new MutationObserver(()=>{
+      localStorage.setItem('cp_subscribed', state.subscribed ? 'true':'false');
+    });
+    observer.observe(document.body, {attributes:true,childList:true,subtree:true});
+  </script>
+</body>
+</html>
